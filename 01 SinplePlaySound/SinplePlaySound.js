@@ -8,16 +8,17 @@ window.onload = function(){
       if(source) {
         source.stop();
       }
-　
+
       source = audioContext.createBufferSource();
-　
+
       source.buffer = buffer;
       source.connect(audioContext.destination);
       source.start(0);
     });
   };
-　
+
   document.getElementById('file').addEventListener('change', function(e){
     fileReader.readAsArrayBuffer(e.target.files[0]);
   });
+
 };
