@@ -3,11 +3,6 @@ window.onload = function(){
   var audioContext = new AudioContext;
   var fileReader   = new FileReader;
 
-
-  var analyser = audioContext.createAnalyser();
-  analyser.fftSize = 128;
-  analyser.connect(audioContext.destination);
-
   fileReader.onload = function(){
     audioContext.decodeAudioData(fileReader.result, function(buffer){
       if(source) {
