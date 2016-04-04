@@ -1,5 +1,5 @@
 window.onload = function(){
-  var source, animationId;
+  var source;
   var audioContext = new AudioContext;
   var fileReader   = new FileReader;
 
