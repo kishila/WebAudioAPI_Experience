@@ -1,0 +1,33 @@
+span.icon {
+  height:40px;
+  width:40px;
+  display:block;
+  position:relative;
+}
+
+span.icon-start:before {
+  content:'';
+  height:0;
+  width:0;
+  display:block;
+  border:10px transparent solid;
+  border-right-width:0;
+  border-left-color:#333;
+  position:absolute; top:10px;
+  left:16px;
+}
+
+span.icon-stop:before, span.icon-stop:after {
+  content:'';
+  height:20px;
+  width:4px;
+  display:block;
+  background:#333;
+  position:absolute;
+  top:10px;
+  left:14px;
+}
+
+span.icon-stop:after {
+  left:22px;
+}
