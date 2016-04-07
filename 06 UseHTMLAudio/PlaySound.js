@@ -1,9 +1,10 @@
 window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
-  var source, animationId;;
+  var animationId;
   var audioContext = new AudioContext;
   var oscillator = null;
-  var fileReader   = new FileReader;
+  var audio;
+  var isStop = true;
 
   // ゲインノードの構築
   audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
@@ -18,19 +19,12 @@ window.onload = function(){
   var canvasContext = canvas.getContext('2d');
   canvas.setAttribute('width', analyser.frequencyBinCount * 10);
 
-  fileReader.onload = function(){
-    audioContext.decodeAudioData(fileReader.result, function(buffer){
-      // 2回目以降のファイル選択
-      if(source){
-        source.stop();
-        cancelAnimationFrame(animationId)
-      }
+  document.getElementById('sound_button').addEventListener('click', function() {
+    if(isStop) {
+      audio= document.getElementById("audio");
 
-      // AudioBufferSourceNodeのインスタンスの作成
-      source = audioContext.createBufferSource();
-
-      // AudioBufferをセット
-      source.buffer = buffer;
+      // Create the instance of MediaElementAudioSourceNode
+      var source = audioContext.createMediaElementSource(audio);
 
       // AudioBufferSourceNode (Input) -> GainNode (Volume) -> Analyser(Visualizer) -> AudioDestinationNode (Output)
       source.connect(gain);
@@ -38,15 +32,26 @@ window.onload = function(){
       analyser.connect(audioContext.destination);
 
       // Set parameters
-      source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
-      source.loop = document.getElementById('checkbox-loop').checked;
+      audio.playbackRate = document.getElementById('range-playback-rate').valueAsNumber
 
       // Start audio
-      source.start(0);
+      audio.play();
 
+      // Animation
       animationId = requestAnimationFrame(render);
-    });
-  };
+
+      isStop = false;
+      document.getElementById('sound_icon').classList.remove("icon-start");
+      document.getElementById('sound_icon').classList.add("icon-stop");
+    } else {
+      audio.pause();
+      audio = null;
+      cancelAnimationFrame(animationId)
+      isStop = true;
+      document.getElementById('sound_icon').classList.remove("icon-stop");
+      document.getElementById('sound_icon').classList.add("icon-start");
+    }
+  });
 
   render = function(){
     var spectrums = new Uint8Array(analyser.frequencyBinCount);
@@ -60,10 +65,6 @@ window.onload = function(){
     animationId = requestAnimationFrame(render);
   };
 
-  document.getElementById('audio-file').addEventListener('change', function(e){
-    fileReader.readAsArrayBuffer(e.target.files[0]);
-  });
-
   document.getElementById('range-volume').addEventListener('input', function() {
     var min = gain.gain.minValue || 0;
     var max = gain.gain.maxValue || 1;
@@ -74,15 +75,9 @@ window.onload = function(){
   });
 
   document.getElementById('range-playback-rate').addEventListener('input', function() {
-    if(source){
-      source.playbackRate.value = this.valueAsNumber;
+    if(audio){
+      audio.playbackRate = this.valueAsNumber;
     }
     document.getElementById('playback-rate').textContent = this.value;
-  });
-
-  document.getElementById('checkbox-loop').addEventListener('change', function() {
-    if(source){
-      source.loop = this.checked;
-    }
   });
 };
