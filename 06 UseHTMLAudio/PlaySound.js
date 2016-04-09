@@ -23,19 +23,26 @@ window.onload = function(){
     if(isStop) {
       audio= document.getElementById("audio");
 
-      // Create the instance of MediaElementAudioSourceNode
-      var source = audioContext.createMediaElementSource(audio);
+      audio.addEventListener('loadstart', function(event) {
+        alert("start load");
+        // Create the instance of MediaElementAudioSourceNode
+        var source = audioContext.createMediaElementSource(audio);
 
-      // AudioBufferSourceNode (Input) -> GainNode (Volume) -> Analyser(Visualizer) -> AudioDestinationNode (Output)
-      source.connect(gain);
-      gain.connect(analyser);
-      analyser.connect(audioContext.destination);
+        // AudioBufferSourceNode (Input) -> GainNode (Volume) -> Analyser(Visualizer) -> AudioDestinationNode (Output)
+        source.connect(gain);
+        gain.connect(analyser);
+        analyser.connect(audioContext.destination);
 
-      // Set parameters
-      audio.playbackRate = document.getElementById('range-playback-rate').valueAsNumber
+        // Set parameters
+        audio.playbackRate = document.getElementById('range-playback-rate').valueAsNumber
+        audio.playbackRate
 
-      // Start audio
-      audio.play();
+        // Start audio
+        audio.play();
+      });
+
+　　　　  // ローディングによる初期化
+      audio.load();
 
       // Animation
       animationId = requestAnimationFrame(render);
