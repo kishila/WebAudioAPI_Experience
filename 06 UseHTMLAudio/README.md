@@ -2,5 +2,5 @@
 
 ```txt
 HTMLに埋め込まれたAudioタグを入力点とし、音を再生
-playbackRateはなぜか動作していない
+playbackRateはChromeは対応しているがfirefoxは対応していない (2016/04/04)
 ```
