@@ -24,7 +24,6 @@ window.onload = function(){
       audio= document.getElementById("audio");
 
       audio.addEventListener('loadstart', function(event) {
-        alert("start load");
         // Create the instance of MediaElementAudioSourceNode
         var source = audioContext.createMediaElementSource(audio);
 
