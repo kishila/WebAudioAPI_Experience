@@ -33,7 +33,7 @@ window.onload = function(){
         analyser.connect(audioContext.destination);
 
         // Set parameters
-        audio.playbackRate = document.getElementById('range-playback-rate').valueAsNumber
+        audio.playbackRate = document.getElementById('range-playback-rate').valueAsNumber;
 
         // Start audio
         audio.play();
