@@ -34,7 +34,6 @@ window.onload = function(){
 
         // Set parameters
         audio.playbackRate = document.getElementById('range-playback-rate').valueAsNumber
-        audio.playbackRate
 
         // Start audio
         audio.play();
