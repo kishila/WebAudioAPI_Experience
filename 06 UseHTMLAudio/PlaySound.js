@@ -23,7 +23,7 @@ window.onload = function(){
     if(isStop) {
       audio= document.getElementById("audio");
 
-      audio.addEventListener('loadstart', function(event) {
+      audio.addEventListener('play', function(event) {
         // Create the instance of MediaElementAudioSourceNode
         var source = audioContext.createMediaElementSource(audio);
 
@@ -34,13 +34,10 @@ window.onload = function(){
 
         // Set parameters
         audio.playbackRate = document.getElementById('range-playback-rate').valueAsNumber;
-
-        // Start audio
-        audio.play();
       });
 
-　　　　  // ローディングによる初期化
-      audio.load();
+      // Start audio
+      audio.play();
 
       // Animation
       animationId = requestAnimationFrame(render);
