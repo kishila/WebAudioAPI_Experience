@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>UseHTMLVideo</title>
+    <script type="text/javascript" src="PlaySound.js"></script>
+    <link rel="stylesheet" type="text/css" href="./css/icon.css">
+    <link rel="stylesheet" type="text/css" href="./css/title.css">
+  </head>
+  <body>
+    <video id="video" controls preload="auto">
+      <source src="video/sample.mp4" type="video/mp4">
+    </video>
+    <br>
+    <dl>
+      <dt>
+        START / STOP
+      </dt>
+      <dd>
+        <button id="sound_button" type="button">
+          <span id="sound_icon" class="icon icon-start"></span>
+        </button>
+      </dd>
+      <br>
+      <dt>
+        <label>
+          VOLUME :
+          <span id="output-volume">1</span>
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range-volume" value="1" min="0" max="1" step="0.05">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          PLAYBACK RATE :
+          <span id="playback-rate">1</span>
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range-playback-rate" value="1" min="0.05" max="2" step="0.05">
+      </dd>
+      <br>
+      <br>
+      <dt>
+        <label>
+          Visualizer
+        </label>
+      </dt>
+      <dd>
+        <canvas id="visualizer" height="255"></canvas>
+      </dd>
+    </dl>
+  </body>
+</html>
