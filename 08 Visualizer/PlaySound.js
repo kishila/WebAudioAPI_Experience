@@ -5,11 +5,16 @@ window.onload = function(){
   var oscillator = null;
   var fileReader   = new FileReader;
 
+  // ゲインノードの構築
   audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
   var gain = audioContext.createGain();
 
+  // キャンバスの構築
+  var canvas        = document.getElementById('visualizer');
+  var canvasContext = canvas.getContext('2d');
+
   fileReader.onload = function(){
-    audioContext.decodeAudioData(fileReader.result, function(buffer){
+    var successCallback = function(audioBuffer) {
       // 2回目以降のファイル選択
       if(source){
         source.stop();
@@ -19,7 +24,7 @@ window.onload = function(){
       source = audioContext.createBufferSource();
 
       // AudioBufferをセット
-      source.buffer = buffer;
+      source.buffer = audioBuffer;
 
       // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
       source.connect(gain);
@@ -31,7 +36,48 @@ window.onload = function(){
 
       // Start audio
       source.start(0);
-    });
+
+      // ビジュアライザー描画処理
+      var channelLs = new Float32Array(audioBuffer.length);
+      var channelRs = new Float32Array(audioBuffer.length);
+      // ステレオかモノラルか判別
+      if (audioBuffer.numberOfChannels > 1) {
+        channelLs.set(audioBuffer.getChannelData(0));
+        channelRs.set(audioBuffer.getChannelData(1));
+      } else if (audioBuffer.numberOfChannels > 0) {
+        channelLs.set(audioBuffer.getChannelData(0));
+      } else {
+        window.alert('The number of channels is invalid.');
+        return;
+      }
+
+      var width  = canvas.width;
+      var height = canvas.height;
+
+      // Clear previous data
+      canvasContext.clearRect(0, 0, width, height);
+
+      // Draw audio wave
+      canvasContext.beginPath();
+
+      for (var i = 0, len = channelLs.length; i < len; i++) {
+        var x = (i / len) * width;
+        var y = ((1 - channelLs[i]) / 2) * height;
+        if (i === 0) {
+          canvasContext.moveTo(x, y);
+        } else {
+          canvasContext.lineTo(x, y);
+        }
+      }
+
+      canvasContext.stroke();
+    }
+
+    var errorCallback = function(error) {
+
+    }
+
+    audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
   };
 
   document.getElementById('audio-file').addEventListener('change', function(e){
