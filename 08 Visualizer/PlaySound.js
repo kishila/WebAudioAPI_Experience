@@ -30,7 +30,7 @@ window.onload = function(){
       source.connect(gain);
       gain.connect(audioContext.destination);
 
-      // Set parameters
+      // パラメータの設定
       source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
       source.loop = document.getElementById('checkbox-loop').checked;
 
@@ -40,7 +40,7 @@ window.onload = function(){
       // ビジュアライザー描画処理
       var channelLs = new Float32Array(audioBuffer.length);
       var channelRs = new Float32Array(audioBuffer.length);
-      // ステレオかモノラルか判別
+      // ステレオかモノラルかをチャンネル数で判別
       if (audioBuffer.numberOfChannels > 1) {
         channelLs.set(audioBuffer.getChannelData(0));
         channelRs.set(audioBuffer.getChannelData(1));
@@ -54,10 +54,10 @@ window.onload = function(){
       var width  = canvas.width;
       var height = canvas.height;
 
-      // Clear previous data
+      // キャンバスの初期化
       canvasContext.clearRect(0, 0, width, height);
 
-      // Draw audio wave
+      // 音の波形の描画
       canvasContext.beginPath();
 
       for (var i = 0, len = channelLs.length; i < len; i++) {
