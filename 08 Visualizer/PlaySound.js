@@ -14,10 +14,12 @@ window.onload = function(){
   var canvasContext = canvas.getContext('2d');
 
   fileReader.onload = function(){
+    // オーディオデータのでコード成功時
     var successCallback = function(audioBuffer) {
       // 2回目以降のファイル選択
       if(source){
         source.stop();
+        source = null;
       }
 
       // AudioBufferSourceNodeのインスタンスの作成
@@ -37,7 +39,7 @@ window.onload = function(){
       // Start audio
       source.start(0);
 
-      // ビジュアライザー描画処理
+      // 波形データ用の配列
       var channelLs = new Float32Array(audioBuffer.length);
       var channelRs = new Float32Array(audioBuffer.length);
       // ステレオかモノラルかをチャンネル数で判別
@@ -54,27 +56,37 @@ window.onload = function(){
       var width  = canvas.width;
       var height = canvas.height;
 
+      // Sampling period
+      var period = 1 / audioContext.sampleRate;
+
+      // 50m秒間隔の割合を取得
+      var n50msec = Math.floor(50 * Math.pow(10, -3) * audioContext.sampleRate);
+
       // キャンバスの初期化
       canvasContext.clearRect(0, 0, width, height);
 
-      // 音の波形の描画
+      // 現在のパスをリセット
       canvasContext.beginPath();
 
+      // 音の波形の描画
       for (var i = 0, len = channelLs.length; i < len; i++) {
-        var x = (i / len) * width;
-        var y = ((1 - channelLs[i]) / 2) * height;
-        if (i === 0) {
-          canvasContext.moveTo(x, y);
-        } else {
-          canvasContext.lineTo(x, y);
+        // 50 msec ?
+        if ((i % n50msec) === 0) {
+            var x = (i / len) * width;
+            var y = ((1 - channelLs[i]) / 2) * height;
+            if (i === 0) {
+            canvasContext.moveTo(x, y);
+          } else {
+            canvasContext.lineTo(x, y);
+          }
         }
       }
-
       canvasContext.stroke();
     }
 
+    // オーディオデータのでコード失敗時
     var errorCallback = function(error) {
-
+      alert(error);
     }
 
     audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
