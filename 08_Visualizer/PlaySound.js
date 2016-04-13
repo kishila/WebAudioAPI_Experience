@@ -93,12 +93,11 @@ window.onload = function(){
     canvasContext.fillText(' 1.00', 3, paddingTop);
     canvasContext.fillText(' 0.00', 3, middle);
     canvasContext.fillText('-1.00', 3, innerBottom);
-
-    alert(audioContext.sampleRate);
   };
 
   // ファイル読み込み完了時の処理
   fileReader.onload = function(){
+    // ファイル読み込み成功時のコールバック
     var successCallback = function(audioBuffer) {
       // 2回目以降のファイル選択
       if(source){
@@ -119,7 +118,7 @@ window.onload = function(){
       source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
       source.loop = document.getElementById('checkbox-loop').checked;
 
-      // Start audio
+      // 再生開始
       source.start(0);
 
       // 波形データ用の配列
@@ -140,6 +139,7 @@ window.onload = function(){
       drawAudio(canvas, channelLs, audioContext.sampleRate);
     }
 
+    // ファイル読み込み失敗時のコールバック
     var errorCallback = function(error) {
 
     }
@@ -147,10 +147,12 @@ window.onload = function(){
     audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
   };
 
+  // ファイルが選択されたとき
   document.getElementById('audio-file').addEventListener('change', function(e){
     fileReader.readAsArrayBuffer(e.target.files[0]);
   });
 
+  // START / STOP ボタンが押されたとき
   document.getElementById('range-volume').addEventListener('input', function() {
     var min = gain.gain.minValue || 0;
     var max = gain.gain.maxValue || 1;
@@ -160,6 +162,7 @@ window.onload = function(){
     }
   });
 
+  // Volumeバーが操作されたとき
   document.getElementById('range-playback-rate').addEventListener('input', function() {
     if(source){
       source.playbackRate.value = this.valueAsNumber;
@@ -167,6 +170,7 @@ window.onload = function(){
     document.getElementById('playback-rate').textContent = this.value;
   });
 
+  // PlaybackRateバーが操作されたとき
   document.getElementById('checkbox-loop').addEventListener('change', function() {
     if(source){
       source.loop = this.checked;
