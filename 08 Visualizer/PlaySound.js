@@ -93,6 +93,8 @@ window.onload = function(){
     canvasContext.fillText(' 1.00', 3, paddingTop);
     canvasContext.fillText(' 0.00', 3, middle);
     canvasContext.fillText('-1.00', 3, innerBottom);
+
+    alert(audioContext.sampleRate);
   };
 
   // ファイル読み込み完了時の処理
