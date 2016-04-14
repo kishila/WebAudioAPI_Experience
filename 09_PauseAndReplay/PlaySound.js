@@ -5,6 +5,7 @@ window.onload = function(){
   var oscillator = null;
   var fileReader   = new FileReader;
 
+  var isFirstPlay = true;
   var isStop = true;
   var replayTime = 0;
 
@@ -98,64 +99,65 @@ window.onload = function(){
     canvasContext.fillText('-1.00', 3, innerBottom);
   };
 
-////
+  // ファイル読み込み成功時のコールバック
+  var successCallback = function(audioBuffer) {
+    // 2回目以降のファイル選択
+    if(source){
+      source.stop();
+      isFirstPlay = true;
+    }
 
-var successCallback = function(audioBuffer) {
-  // 2回目以降のファイル選択
-  if(source){
-    source.stop();
-  }
+    // AudioBufferSourceNodeのインスタンスの作成
+    source = audioContext.createBufferSource();
 
-  // AudioBufferSourceNodeのインスタンスの作成
-  source = audioContext.createBufferSource();
+    // AudioBufferをセット
+    source.buffer = audioBuffer;
 
-  // AudioBufferをセット
-  source.buffer = audioBuffer;
+    // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
+    source.connect(gain);
+    gain.connect(audioContext.destination);
 
-  // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
-  source.connect(gain);
-  gain.connect(audioContext.destination);
+    // パラメータの設定
+    source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
+    source.loop = document.getElementById('checkbox-loop').checked;
 
-  // パラメータの設定
-  source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
-  source.loop = document.getElementById('checkbox-loop').checked;
+    // Start audio
+    source.start(0, replayTime);
+    isStop = false;
+    document.getElementById('sound_icon').classList.remove("icon-start");
+    document.getElementById('sound_icon').classList.add("icon-stop");
 
-  // Start audio
-  source.start(0, replayTime);
-  isStop = false;
-  document.getElementById('sound_icon').classList.remove("icon-start");
-  document.getElementById('sound_icon').classList.add("icon-stop");
+    if (isFirstPlay) {
 
-  // 波形データ用の配列
-  var channelLs = new Float32Array(audioBuffer.length);
-  var channelRs = new Float32Array(audioBuffer.length);
-  // ステレオかモノラルかをチャンネル数で判別
-  if (audioBuffer.numberOfChannels > 1) {
-    channelLs.set(audioBuffer.getChannelData(0));
-    channelRs.set(audioBuffer.getChannelData(1));
-  } else if (audioBuffer.numberOfChannels > 0) {
-    channelLs.set(audioBuffer.getChannelData(0));
-  } else {
-    window.alert('The number of channels is invalid.');
-    return;
-  }
+      // 波形データの記録
+      var channelLs = new Float32Array(audioBuffer.length);
+      var channelRs = new Float32Array(audioBuffer.length);
 
-  // キャンバスの描画
-  drawAudio(canvas, channelLs, audioContext.sampleRate);
-};
+      // ステレオかモノラルかをチャンネル数で判別
+      if (audioBuffer.numberOfChannels > 1) {
+        channelLs.set(audioBuffer.getChannelData(0));
+        channelRs.set(audioBuffer.getChannelData(1));
+      } else if (audioBuffer.numberOfChannels > 0) {
+        channelLs.set(audioBuffer.getChannelData(0));
+      } else {
+        window.alert('The number of channels is invalid.');
+        return;
+      }
 
-var errorCallback = function(error) {
+      // キャンバスの描画
+      drawAudio(canvas, channelLs, audioContext.sampleRate);
+      
+      isFirstPlay = false;
+    }
+  };
 
-};
+  // ファイル読み込み失敗時のコールバック
+  var errorCallback = function(error) {
 
-
-////
-
+  };
 
   // ファイル読み込み完了時の処理
   fileReader.onload = function(){
-
-
     audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
   };
 
@@ -175,6 +177,7 @@ var errorCallback = function(error) {
     } else {
       replayTime = audioContext.currentTime;
       source.stop();
+      source = null;
       isStop = true;
       document.getElementById('sound_icon').classList.remove("icon-stop");
       document.getElementById('sound_icon').classList.add("icon-start");
@@ -199,6 +202,7 @@ var errorCallback = function(error) {
     document.getElementById('playback-rate').textContent = this.value;
   });
 
+  // チェックボタンが操作されたとき
   document.getElementById('checkbox-loop').addEventListener('change', function() {
     if(source){
       source.loop = this.checked;
