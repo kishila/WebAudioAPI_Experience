@@ -1,6 +1,7 @@
 window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var source;
+  var sourceBuffer;
   var audioContext = new AudioContext;
   var oscillator = null;
   var fileReader   = new FileReader;
@@ -105,13 +106,19 @@ window.onload = function(){
     if(source){
       source.stop();
       isFirstPlay = true;
+      sourceBuffer = null;
     }
 
     // AudioBufferSourceNodeのインスタンスの作成
     source = audioContext.createBufferSource();
 
     // AudioBufferをセット
-    source.buffer = audioBuffer;
+    if (isFirstPlay) {
+      source.buffer = audioBuffer;
+      sourceBuffer = audioBuffer;
+    } else {
+      source.buffer = sourceBuffer;
+    }
 
     // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
     source.connect(gain);
@@ -146,7 +153,7 @@ window.onload = function(){
 
       // キャンバスの描画
       drawAudio(canvas, channelLs, audioContext.sampleRate);
-      
+
       isFirstPlay = false;
     }
   };
@@ -173,7 +180,7 @@ window.onload = function(){
   // START / STOP ボタンが押されたとき
   document.getElementById('sound_button').addEventListener('click', function(){
     if(isStop){
-      audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
+      successCallback(sourceBuffer);
     } else {
       replayTime = audioContext.currentTime;
       source.stop();
