@@ -34,10 +34,12 @@ window.onload = function(){
     });
   };
 
+  // ファイルが選択されたとき
   document.getElementById('audio-file').addEventListener('change', function(e){
     fileReader.readAsArrayBuffer(e.target.files[0]);
   });
 
+  // Volumeバーが操作されたとき
   document.getElementById('range-volume').addEventListener('input', function() {
     var min = gain.gain.minValue || 0;
     var max = gain.gain.maxValue || 1;
@@ -47,6 +49,7 @@ window.onload = function(){
     }
   });
 
+  // PlaybackRateバーが操作されたとき
   document.getElementById('range-playback-rate').addEventListener('input', function() {
     if(source){
       source.playbackRate.value = this.valueAsNumber;
@@ -54,6 +57,7 @@ window.onload = function(){
     document.getElementById('playback-rate').textContent = this.value;
   });
 
+  // チェックボタンが操作されたとき
   document.getElementById('checkbox-loop').addEventListener('change', function() {
     if(source){
       source.loop = this.checked;
