@@ -109,6 +109,7 @@ window.onload = function(){
     // 2回目以降のファイル選択
     if(source){
       source.stop();
+      source = null;
       sourceBuffer = null;
     }
 
