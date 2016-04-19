@@ -6,8 +6,7 @@ window.onload = function(){
   var oscillator = null;
   var fileReader   = new FileReader;
 
-  var isFirstPlay = true;
-  var isStop = true;
+  var isStop = null;
   var replayTime = 0;
 
   // HTML要素
@@ -110,19 +109,40 @@ window.onload = function(){
     // 2回目以降のファイル選択
     if(source){
       source.stop();
-      isFirstPlay = true;
       sourceBuffer = null;
     }
 
+    playAudio(audioBuffer);
+
+    // 波形データの記録
+    var channelLs = new Float32Array(audioBuffer.length);
+    var channelRs = new Float32Array(audioBuffer.length);
+
+    // ステレオかモノラルかをチャンネル数で判別
+    if (audioBuffer.numberOfChannels > 1) {
+      channelLs.set(audioBuffer.getChannelData(0));
+      channelRs.set(audioBuffer.getChannelData(1));
+    } else if (audioBuffer.numberOfChannels > 0) {
+      channelLs.set(audioBuffer.getChannelData(0));
+    } else {
+      window.alert('The number of channels is invalid.');
+      return;
+    }
+
+    // キャンバスの描画
+    drawAudio(visualizer, channelLs, audioContext.sampleRate);
+  };
+
+  var playAudio = function(audioBuffer) {
     // AudioBufferSourceNodeのインスタンスの作成
     source = audioContext.createBufferSource();
 
     // AudioBufferをセット
-    if (isFirstPlay) {
+    if (sourceBuffer) {
+      source.buffer = sourceBuffer;
+    } else {
       source.buffer = audioBuffer;
       sourceBuffer = audioBuffer;
-    } else {
-      source.buffer = sourceBuffer;
     }
 
     // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
@@ -138,29 +158,6 @@ window.onload = function(){
     isStop = false;
     document.getElementById('sound-icon').classList.remove("icon-start");
     document.getElementById('sound-icon').classList.add("icon-stop");
-
-    if (isFirstPlay) {
-
-      // 波形データの記録
-      var channelLs = new Float32Array(audioBuffer.length);
-      var channelRs = new Float32Array(audioBuffer.length);
-
-      // ステレオかモノラルかをチャンネル数で判別
-      if (audioBuffer.numberOfChannels > 1) {
-        channelLs.set(audioBuffer.getChannelData(0));
-        channelRs.set(audioBuffer.getChannelData(1));
-      } else if (audioBuffer.numberOfChannels > 0) {
-        channelLs.set(audioBuffer.getChannelData(0));
-      } else {
-        window.alert('The number of channels is invalid.');
-        return;
-      }
-
-      // キャンバスの描画
-      drawAudio(visualizer, channelLs, audioContext.sampleRate);
-
-      isFirstPlay = false;
-    }
   };
 
   // ファイル読み込み失敗時のコールバック
@@ -180,8 +177,10 @@ window.onload = function(){
 
   // START / STOP ボタンが押されたとき
   soundButton.addEventListener('click', function(){
-    if(isStop){
-      successCallback(sourceBuffer);
+    if (isStop === null) {
+
+    } else if(isStop === true){
+      playAudio(sourceBuffer);
     } else {
       replayTime = audioContext.currentTime;
       source.stop();
