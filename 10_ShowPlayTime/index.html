@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>PauseAndReplay</title>
+    <script type="text/javascript" src="PlaySound.js"></script>
+    <link rel="stylesheet" type="text/css" href="./css/icon.css">
+    <link rel="stylesheet" type="text/css" href="./css/title.css">
+  </head>
+  <body>
+    <dl>
+      <dt>
+        <label>
+          SELECT AUDIO FILE :
+          <span id="file-name"></span>
+        </label>
+      </dt>
+      <dd>
+        <input id="audio-file-button" type="file"><br />
+      </dd>
+      <br>
+      <dt>
+        START / STOP
+      </dt>
+      <dd>
+        <button id="sound-button" type="button">
+          <span id="sound-icon" class="icon icon-start"></span>
+        </button>
+      </dd>
+      <br>
+      <dt>
+        <label>
+          VOLUME :
+          <span id="output-volume">1</span>
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range-volume" value="1" min="0" max="1" step="0.05">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          PLAYBACK RATE :
+          <span id="playback-rate">1</span>
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range-playback-rate" value="1" min="0.05" max="2" step="0.05">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          : LOOP
+        </label>
+      </dt>
+      <dd>
+        <input type="checkbox" id="checkbox-loop">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          Visualizer
+        </label>
+      </dt>
+      <dd>
+        <canvas id="visualizer" width="600" height="255" style="background-color:black;"></canvas>
+      </dd>
+    </dl>
+  </body>
+</html>
