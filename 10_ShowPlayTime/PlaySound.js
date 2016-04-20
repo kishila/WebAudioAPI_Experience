@@ -17,6 +17,7 @@ window.onload = function(){
   var checkboxLoop = document.getElementById('checkbox-loop');
   var visualizer = document.getElementById('visualizer');
 
+  var currentTime = document.getElementById('current-time');
   var totalTime = document.getElementById('total-time');
 
   // ゲインノードの構築
@@ -144,6 +145,12 @@ window.onload = function(){
     drawAudio(visualizer, channelLs, audioContext.sampleRate);
   };
 
+  // ファイル読み込み失敗時のコールバック
+  var errorCallback = function(error) {
+    alert("file loading faild")
+  };
+
+  // オーディオの再生
   var playAudio = function(audioBuffer) {
     // AudioBufferSourceNodeのインスタンスの作成
     source = audioContext.createBufferSource();
@@ -171,10 +178,14 @@ window.onload = function(){
     document.getElementById('sound-icon').classList.add("icon-stop");
   };
 
-  // ファイル読み込み失敗時のコールバック
-  var errorCallback = function(error) {
-
-  };
+  // 現在の再生時間の更新
+  var renewPlayingTime = function() {
+    var minute = Math.floor(audioContext.currentTime / 60);
+    var secound = Math.floor(audioContext.currentTime % 60);
+    if (minute < 10) { minute = "0" + minute; }
+    if (secound < 10) { secound = "0" + secound; }
+    totalTime.textContent = minute + ":" + secound;
+  }
 
   // ファイル読み込み完了時の処理
   fileReader.onload = function(){
