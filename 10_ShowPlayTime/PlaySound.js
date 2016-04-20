@@ -2,12 +2,13 @@ window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var source;
   var sourceBuffer;
-  var audioContext = new AudioContext;
+  var audioContext;
   var oscillator = null;
   var fileReader   = new FileReader;
 
   var isStop = null;
-  var replayTime = 0;
+  var startPoint, pasusePoint, replayTime, playingTime;
+  var totalPauseTime = 0;
 
   // HTML要素
   var audioFileButton = document.getElementById('audio-file-button');
@@ -20,9 +21,8 @@ window.onload = function(){
   var currentTime = document.getElementById('current-time');
   var totalTime = document.getElementById('total-time');
 
-  // ゲインノードの構築
-  audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
-  var gain = audioContext.createGain();
+  // 繰り返し処理
+  var renewPlayingTimeInterval;
 
   // キャンバスへ描画
   var drawAudio = function(canvas, data, sampleRate) {
@@ -114,9 +114,12 @@ window.onload = function(){
       source.stop();
       source = null;
       sourceBuffer = null;
+      totalPauseTime = 0;
+      replayTime = 0;
     }
 
     // 再生時間の情報の初期化
+    playingDurationTime = audioBuffer.duration;
     var minute = Math.floor(audioBuffer.duration / 60);
     var secound = Math.floor(audioBuffer.duration % 60);
     if (minute < 10) { minute = "0" + minute; }
@@ -125,6 +128,9 @@ window.onload = function(){
 
     // オーディオの再生
     playAudio(audioBuffer);
+    startPoint = audioContext.currentTime;
+
+    renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
 
     // 波形データの記録
     var channelLs = new Float32Array(audioBuffer.length);
@@ -163,6 +169,10 @@ window.onload = function(){
       sourceBuffer = audioBuffer;
     }
 
+    // ゲインノードの構築
+    audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
+    var gain = audioContext.createGain();
+
     // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
     source.connect(gain);
     gain.connect(audioContext.destination);
@@ -180,15 +190,21 @@ window.onload = function(){
 
   // 現在の再生時間の更新
   var renewPlayingTime = function() {
-    var minute = Math.floor(audioContext.currentTime / 60);
-    var secound = Math.floor(audioContext.currentTime % 60);
-    if (minute < 10) { minute = "0" + minute; }
-    if (secound < 10) { secound = "0" + secound; }
-    totalTime.textContent = minute + ":" + secound;
+    playingTime = audioContext.currentTime - startPoint - totalPauseTime;
+    if(playingTime > playingDurationTime) {
+      clearInterval(renewPlayingTimeInterval);
+    } else {
+      var minute = Math.floor(playingTime / 60);
+      var secound = Math.floor(playingTime % 60);
+      if (minute < 10) { minute = "0" + minute; }
+      if (secound < 10) { secound = "0" + secound; }
+      currentTime.textContent = minute + ":" + secound;
+    }
   }
 
   // ファイル読み込み完了時の処理
   fileReader.onload = function(){
+    audioContext = new AudioContext;
     audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
   };
 
@@ -199,13 +215,17 @@ window.onload = function(){
 
   // START / STOP ボタンが押されたとき
   soundButton.addEventListener('click', function(){
-    if (isStop === null) {
+    if (isStop === null) { // ファイル選択前
 
-    } else if(isStop === true){
+    } else if(isStop === true){ // 再開
+      totalPauseTime = totalPauseTime + (audioContext.currentTime  - pasusePoint);
+      replayTime = audioContext.currentTime - totalPauseTime;
       playAudio(sourceBuffer);
-    } else {
-      replayTime = audioContext.currentTime;
+      renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
+    } else { // 停止
+      pasusePoint = audioContext.currentTime;
       source.stop();
+      clearInterval(renewPlayingTimeInterval);
       source = null;
       isStop = true;
       document.getElementById('sound-icon').classList.remove("icon-stop");
