@@ -17,6 +17,8 @@ window.onload = function(){
   var checkboxLoop = document.getElementById('checkbox-loop');
   var visualizer = document.getElementById('visualizer');
 
+  var totalTime = document.getElementById('total-time');
+
   // ゲインノードの構築
   audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
   var gain = audioContext.createGain();
@@ -113,6 +115,14 @@ window.onload = function(){
       sourceBuffer = null;
     }
 
+    // 再生時間の情報の初期化
+    var minute = Math.floor(audioBuffer.duration / 60);
+    var secound = Math.floor(audioBuffer.duration % 60);
+    if (minute < 10) { secound = "0" + secound; }
+    if (minute < 10) { minute = "0" + minute; }
+    totalTime.textContent = minute + ":" + secound;
+
+    // オーディオの再生
     playAudio(audioBuffer);
 
     // 波形データの記録
