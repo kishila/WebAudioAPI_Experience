@@ -7,7 +7,7 @@ window.onload = function(){
   var fileReader   = new FileReader;
 
   var isStop = null;
-  var startPoint, pasusePoint, replayTime, playingTime;
+  var startPoint, pasusePoint, replayTime, playingTime, playingDurationTime;
   var totalPauseTime = 0;
 
   // HTML要素
@@ -127,8 +127,8 @@ window.onload = function(){
     totalTime.textContent = minute + ":" + secound;
 
     // オーディオの再生
-    playAudio(audioBuffer);
     startPoint = audioContext.currentTime;
+    playAudio(audioBuffer);
 
     renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
 
