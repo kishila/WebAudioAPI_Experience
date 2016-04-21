@@ -2,20 +2,26 @@ window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var source;
   var sourceBuffer;
-  var audioContext = new AudioContext;
+  var audioContext;
   var oscillator = null;
   var fileReader   = new FileReader;
 
-  var isFirstPlay = true;
-  var isStop = true;
-  var replayTime = 0;
+  var isStop = null;
+  var startPoint, pasusePoint, replayTime, playingTime, playingDurationTime;
+  var totalPauseTime = 0;
 
-  // ゲインノードの構築
-  audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
-  var gain = audioContext.createGain();
+  // HTML要素
+  var audioFileButton = document.getElementById('audio-file-button');
+  var soundButton = document.getElementById('sound-button');
+  var rangeVolume = document.getElementById('range-volume');
+  var rangePlaybackRate = document.getElementById('range-playback-rate');
+  var checkboxLoop = document.getElementById('checkbox-loop');
+  var visualizer = document.getElementById('visualizer');
 
-  // キャンバスの構築
-  var canvas        = document.getElementById('visualizer');
+  var currentTime = document.getElementById('current-time');
+
+  // 繰り返し処理
+  var renewPlayingTimeInterval;
 
   // キャンバスへ描画
   var drawAudio = function(canvas, data, sampleRate) {
@@ -105,20 +111,58 @@ window.onload = function(){
     // 2回目以降のファイル選択
     if(source){
       source.stop();
-      isFirstPlay = true;
+      source = null;
       sourceBuffer = null;
+      totalPauseTime = 0;
+      replayTime = 0;
     }
 
+    // オーディオの再生
+    playAudio(audioBuffer);
+    startPoint = audioContext.currentTime;
+
+    renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
+
+    // 波形データの記録
+    var channelLs = new Float32Array(audioBuffer.length);
+    var channelRs = new Float32Array(audioBuffer.length);
+
+    // ステレオかモノラルかをチャンネル数で判別
+    if (audioBuffer.numberOfChannels > 1) {
+      channelLs.set(audioBuffer.getChannelData(0));
+      channelRs.set(audioBuffer.getChannelData(1));
+    } else if (audioBuffer.numberOfChannels > 0) {
+      channelLs.set(audioBuffer.getChannelData(0));
+    } else {
+      window.alert('The number of channels is invalid.');
+      return;
+    }
+
+    // キャンバスの描画
+    drawAudio(visualizer, channelLs, audioContext.sampleRate);
+  };
+
+  // ファイル読み込み失敗時のコールバック
+  var errorCallback = function(error) {
+    alert("file loading faild")
+  };
+
+  // オーディオの再生
+  var playAudio = function(audioBuffer) {
     // AudioBufferSourceNodeのインスタンスの作成
     source = audioContext.createBufferSource();
 
     // AudioBufferをセット
-    if (isFirstPlay) {
+    if (sourceBuffer) {
+      source.buffer = sourceBuffer;
+    } else {
       source.buffer = audioBuffer;
       sourceBuffer = audioBuffer;
-    } else {
-      source.buffer = sourceBuffer;
     }
+
+    // ゲインノードの構築
+    audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
+    var gain = audioContext.createGain();
 
     // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
     source.connect(gain);
@@ -131,68 +175,51 @@ window.onload = function(){
     // Start audio
     source.start(0, replayTime);
     isStop = false;
-    document.getElementById('sound_icon').classList.remove("icon-start");
-    document.getElementById('sound_icon').classList.add("icon-stop");
+    document.getElementById('sound-icon').classList.remove("icon-start");
+    document.getElementById('sound-icon').classList.add("icon-stop");
+  };
 
-    if (isFirstPlay) {
-
-      // 波形データの記録
-      var channelLs = new Float32Array(audioBuffer.length);
-      var channelRs = new Float32Array(audioBuffer.length);
-
-      // ステレオかモノラルかをチャンネル数で判別
-      if (audioBuffer.numberOfChannels > 1) {
-        channelLs.set(audioBuffer.getChannelData(0));
-        channelRs.set(audioBuffer.getChannelData(1));
-      } else if (audioBuffer.numberOfChannels > 0) {
-        channelLs.set(audioBuffer.getChannelData(0));
-      } else {
-        window.alert('The number of channels is invalid.');
-        return;
-      }
-
-      // キャンバスの描画
-      drawAudio(canvas, channelLs, audioContext.sampleRate);
-
-      isFirstPlay = false;
+  // 現在の再生時間の更新
+  var renewPlayingTime = function() {
+    playingTime = audioContext.currentTime - startPoint - totalPauseTime;
+    if(playingTime > playingDurationTime) {
+      clearInterval(renewPlayingTimeInterval);
     }
-  };
-
-  // ファイル読み込み失敗時のコールバック
-  var errorCallback = function(error) {
-
-  };
+  }
 
   // ファイル読み込み完了時の処理
   fileReader.onload = function(){
+    audioContext = new AudioContext;
     audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
   };
 
-
-
-
-
   // ファイルが選択されたとき
-  document.getElementById('audio-file').addEventListener('change', function(e){
+  audioFileButton.addEventListener('change', function(e){
     fileReader.readAsArrayBuffer(e.target.files[0]);
   });
 
   // START / STOP ボタンが押されたとき
-  document.getElementById('sound_button').addEventListener('click', function(){
-    if(isStop){
-      successCallback(sourceBuffer);
-    } else {
-      replayTime = audioContext.currentTime;
+  soundButton.addEventListener('click', function(){
+    if (isStop === null) { // ファイル選択前
+
+    } else if(isStop === true){ // 再開
+      totalPauseTime = totalPauseTime + (audioContext.currentTime  - pasusePoint);
+      replayTime = audioContext.currentTime - totalPauseTime;
+      playAudio(sourceBuffer);
+      renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
+    } else { // 停止
+      pasusePoint = audioContext.currentTime;
       source.stop();
+      clearInterval(renewPlayingTimeInterval);
       source = null;
       isStop = true;
-      document.getElementById('sound_icon').classList.remove("icon-stop");
-      document.getElementById('sound_icon').classList.add("icon-start");
+      document.getElementById('sound-icon').classList.remove("icon-stop");
+      document.getElementById('sound-icon').classList.add("icon-start");
     }
   });
 
   // Volumeバーが操作されたとき
-  document.getElementById('range-volume').addEventListener('input', function() {
+  rangeVolume.addEventListener('input', function() {
     var min = gain.gain.minValue || 0;
     var max = gain.gain.maxValue || 1;
     if ((this.valueAsNumber >= min) && (this.valueAsNumber <= max)) {
@@ -202,7 +229,7 @@ window.onload = function(){
   });
 
   // PlaybackRateバーが操作されたとき
-  document.getElementById('range-playback-rate').addEventListener('input', function() {
+  rangePlaybackRate.addEventListener('input', function() {
     if(source){
       source.playbackRate.value = this.valueAsNumber;
     }
@@ -210,9 +237,28 @@ window.onload = function(){
   });
 
   // チェックボタンが操作されたとき
-  document.getElementById('checkbox-loop').addEventListener('change', function() {
+  checkboxLoop.addEventListener('change', function() {
     if(source){
       source.loop = this.checked;
     }
+  });
+
+  // ビジュアライザーがクリックされたとき
+  visualizer.addEventListener('click', function(e) {
+    var rect = e.target.getBoundingClientRect();
+    var canvasX = e.clientX - Math.floor(rect.left);
+    var canvasY = e.clientY - Math.floor(rect.top);
+    //console.log("canvasX: " + canvasX);
+    //console.log("canvasY: " + canvasY);
+  });
+
+  // ビジュアライザー内にマウスが入ったとき
+  visualizer.addEventListener('mouseover', function(e) {
+
+  });
+
+  // ビジュアライザー外にマウスが出たとき
+  visualizer.addEventListener('mouseout', function(e) {
+
   });
 };
