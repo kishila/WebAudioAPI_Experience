@@ -204,7 +204,7 @@ window.onload = function(){
 
     } else if(isStop === true){ // 再開
       totalPauseTime = totalPauseTime + (audioContext.currentTime  - pasusePoint);
-      replayTime = audioContext.currentTime - totalPauseTime;
+      replayTime = audioContext.currentTime - totalPauseTime - startPoint;
       playAudio(sourceBuffer);
       renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
     } else { // 停止
