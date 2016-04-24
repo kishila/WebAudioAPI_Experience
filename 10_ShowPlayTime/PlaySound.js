@@ -7,8 +7,13 @@ window.onload = function(){
   var fileReader   = new FileReader;
 
   var isStop = null;
-  var startPoint, pasusePoint, replayTime, playingTime, playingDurationTime;
-  var totalPauseTime = 0;
+
+  var startPoint;  // startが実行されたときのCurrentTime
+  var pasusePoint;  // 停止が実行されたときのCurrentTime
+  var replayTime;  // 再開する曲のポイント
+  var playingTime;  // 再生中の曲の再生時間
+  var totalPauseTime = 0;  // 停止していた時間の合計
+  var playingDurationTime;  // 曲の全体の再生時間
 
   // HTML要素
   var audioFileButton = document.getElementById('audio-file-button');
