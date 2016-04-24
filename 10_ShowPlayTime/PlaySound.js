@@ -10,7 +10,6 @@ window.onload = function(){
 
   var startPoint;  // startが実行されたときのCurrentTime
   var pasusePoint;  // 停止が実行されたときのCurrentTime
-  var replayTime;  // 再開する曲のポイント
   var playingTime;  // 再生中の曲の再生時間
   var totalPauseTime = 0;  // 停止していた時間の合計
   var playingDurationTime;  // 曲の全体の再生時間
@@ -120,7 +119,7 @@ window.onload = function(){
       source = null;
       sourceBuffer = null;
       totalPauseTime = 0;
-      replayTime = 0;
+      playingTime = 0;
     }
 
     // 再生時間の情報の初期化
@@ -187,7 +186,7 @@ window.onload = function(){
     source.loop = document.getElementById('checkbox-loop').checked;
 
     // Start audio
-    source.start(0, replayTime);
+    source.start(0, playingTime);
     isStop = false;
     document.getElementById('sound-icon').classList.remove("icon-start");
     document.getElementById('sound-icon').classList.add("icon-stop");
@@ -195,7 +194,7 @@ window.onload = function(){
 
   // 現在の再生時間の更新
   var renewPlayingTime = function() {
-    playingTime = audioContext.currentTime - startPoint - totalPauseTime;
+    playingTime = audioContext.currentTime - (startPoint + totalPauseTime);
     if(playingTime > playingDurationTime) {
       clearInterval(renewPlayingTimeInterval);
     } else {
@@ -224,7 +223,6 @@ window.onload = function(){
 
     } else if(isStop === true){ // 再開
       totalPauseTime = totalPauseTime + (audioContext.currentTime  - pasusePoint);
-      replayTime = audioContext.currentTime - totalPauseTime - startPoint;
       playAudio(sourceBuffer);
       renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
     } else { // 停止
