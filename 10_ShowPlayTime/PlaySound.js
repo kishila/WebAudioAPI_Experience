@@ -28,6 +28,99 @@ window.onload = function(){
   // 繰り返し処理
   var renewPlayingTimeInterval;
 
+
+  // ファイルが選択されたとき
+  audioFileButton.addEventListener('change', function(e){
+    fileReader.readAsArrayBuffer(e.target.files[0]);
+  });
+
+  // ファイル読み込み完了時の処理
+  fileReader.onload = function(){
+    audioContext = new AudioContext;
+    audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
+  };
+
+  // ファイル読み込み成功時のコールバック
+  var successCallback = function(audioBuffer) {
+    // 2回目以降のファイル選択
+    if(source){
+      source.stop();
+      source = null;
+      sourceBuffer = null;
+      totalPauseTime = 0;
+      playingTime = 0;
+    }
+
+    // 再生時間の情報の初期化
+    playingDurationTime = audioBuffer.duration;
+    var minute = Math.floor(audioBuffer.duration / 60);
+    var secound = Math.floor(audioBuffer.duration % 60);
+    if (minute < 10) { minute = "0" + minute; }
+    if (secound < 10) { secound = "0" + secound; }
+    totalTime.textContent = minute + ":" + secound;
+
+    // オーディオの再生
+    startPoint = audioContext.currentTime;
+    playAudio(audioBuffer);
+
+    renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
+
+    // 波形データの記録
+    var channelLs = new Float32Array(audioBuffer.length);
+    var channelRs = new Float32Array(audioBuffer.length);
+
+    // ステレオかモノラルかをチャンネル数で判別
+    if (audioBuffer.numberOfChannels > 1) {
+      channelLs.set(audioBuffer.getChannelData(0));
+      channelRs.set(audioBuffer.getChannelData(1));
+    } else if (audioBuffer.numberOfChannels > 0) {
+      channelLs.set(audioBuffer.getChannelData(0));
+    } else {
+      window.alert('The number of channels is invalid.');
+      return;
+    }
+
+    // キャンバスの描画
+    drawAudio(visualizer, channelLs, audioContext.sampleRate);
+  };
+
+  // ファイル読み込み失敗時のコールバック
+  var errorCallback = function(error) {
+    alert("file loading faild")
+  }
+
+  // オーディオの再生
+  var playAudio = function(audioBuffer) {
+    // AudioBufferSourceNodeのインスタンスの作成
+    source = audioContext.createBufferSource();
+
+    // AudioBufferをセット
+    if (sourceBuffer) {
+      source.buffer = sourceBuffer;
+    } else {
+      source.buffer = audioBuffer;
+      sourceBuffer = audioBuffer;
+    }
+
+    // ゲインノードの構築
+    audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
+    var gain = audioContext.createGain();
+
+    // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
+    source.connect(gain);
+    gain.connect(audioContext.destination);
+
+    // パラメータの設定
+    source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
+    source.loop = document.getElementById('checkbox-loop').checked;
+
+    // Start audio
+    source.start(0, playingTime);
+    isStop = false;
+    document.getElementById('sound-icon').classList.remove("icon-start");
+    document.getElementById('sound-icon').classList.add("icon-stop");
+  };
+
   // キャンバスへ描画
   var drawAudio = function(canvas, data, sampleRate) {
     var canvasContext = canvas.getContext('2d');
@@ -111,87 +204,6 @@ window.onload = function(){
     canvasContext.fillText('-1.00', 3, innerBottom);
   };
 
-  // ファイル読み込み成功時のコールバック
-  var successCallback = function(audioBuffer) {
-    // 2回目以降のファイル選択
-    if(source){
-      source.stop();
-      source = null;
-      sourceBuffer = null;
-      totalPauseTime = 0;
-      playingTime = 0;
-    }
-
-    // 再生時間の情報の初期化
-    playingDurationTime = audioBuffer.duration;
-    var minute = Math.floor(audioBuffer.duration / 60);
-    var secound = Math.floor(audioBuffer.duration % 60);
-    if (minute < 10) { minute = "0" + minute; }
-    if (secound < 10) { secound = "0" + secound; }
-    totalTime.textContent = minute + ":" + secound;
-
-    // オーディオの再生
-    startPoint = audioContext.currentTime;
-    playAudio(audioBuffer);
-
-    renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
-
-    // 波形データの記録
-    var channelLs = new Float32Array(audioBuffer.length);
-    var channelRs = new Float32Array(audioBuffer.length);
-
-    // ステレオかモノラルかをチャンネル数で判別
-    if (audioBuffer.numberOfChannels > 1) {
-      channelLs.set(audioBuffer.getChannelData(0));
-      channelRs.set(audioBuffer.getChannelData(1));
-    } else if (audioBuffer.numberOfChannels > 0) {
-      channelLs.set(audioBuffer.getChannelData(0));
-    } else {
-      window.alert('The number of channels is invalid.');
-      return;
-    }
-
-    // キャンバスの描画
-    drawAudio(visualizer, channelLs, audioContext.sampleRate);
-  };
-
-  // ファイル読み込み失敗時のコールバック
-  var errorCallback = function(error) {
-    alert("file loading faild")
-  };
-
-  // オーディオの再生
-  var playAudio = function(audioBuffer) {
-    // AudioBufferSourceNodeのインスタンスの作成
-    source = audioContext.createBufferSource();
-
-    // AudioBufferをセット
-    if (sourceBuffer) {
-      source.buffer = sourceBuffer;
-    } else {
-      source.buffer = audioBuffer;
-      sourceBuffer = audioBuffer;
-    }
-
-    // ゲインノードの構築
-    audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
-    var gain = audioContext.createGain();
-
-    // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
-    source.connect(gain);
-    gain.connect(audioContext.destination);
-
-    // パラメータの設定
-    source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
-    source.loop = document.getElementById('checkbox-loop').checked;
-
-    // Start audio
-    source.start(0, playingTime);
-    isStop = false;
-    document.getElementById('sound-icon').classList.remove("icon-start");
-    document.getElementById('sound-icon').classList.add("icon-stop");
-  };
-
   // 現在の再生時間の更新
   var renewPlayingTime = function() {
     playingTime = audioContext.currentTime - (startPoint + totalPauseTime);
@@ -205,17 +217,6 @@ window.onload = function(){
       currentTime.textContent = minute + ":" + secound;
     }
   }
-
-  // ファイル読み込み完了時の処理
-  fileReader.onload = function(){
-    audioContext = new AudioContext;
-    audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
-  };
-
-  // ファイルが選択されたとき
-  audioFileButton.addEventListener('change', function(e){
-    fileReader.readAsArrayBuffer(e.target.files[0]);
-  });
 
   // START / STOP ボタンが押されたとき
   soundButton.addEventListener('click', function(){
