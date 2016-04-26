@@ -124,7 +124,6 @@ window.onload = function(){
   // キャンバスへ描画
   var drawAudio = function(canvas, data, sampleRate) {
     var canvasContext = canvas.getContext('2d');
-
     var width  = canvas.width;
     var height = canvas.height;
 
@@ -143,10 +142,10 @@ window.onload = function(){
     // Sampling period
     var period = 1 / sampleRate;
 
-    // This value is the number of samples during 50 msec
+    // 50 msec あたりのサンプリング周波数
     var n50msec = Math.floor(50 * Math.pow(10, -3) * sampleRate);
 
-    // This value is the number of samples during 60 sec
+    // 60 sec あたりのサンプリング周波数
     var n60sec = Math.floor(60 * sampleRate);
 
     // Clear previous data
@@ -155,6 +154,7 @@ window.onload = function(){
     // Draw audio wave
     canvasContext.beginPath();
 
+    // 波形と60秒単位の枠線の描画
     for (var i = 0, len = data.length; i < len; i++) {
       // 50 msec ?
       if ((i % n50msec) === 0) {
