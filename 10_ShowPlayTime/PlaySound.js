@@ -156,10 +156,11 @@ window.onload = function(){
 
     // 波形と60秒単位の枠線の描画
     for (var i = 0, len = data.length; i < len; i++) {
-      // 50 msec ?
+      // 50 msec ごとにパスを設定
       if ((i % n50msec) === 0) {
         var x = Math.floor((i / len) * innerWidth) + paddingLeft;
         var y = Math.floor(((1 - data[i]) / 2) * innerHeight) + paddingTop;
+        console.log(y);
 
         if (i === 0) {
             canvasContext.moveTo(x, y);
@@ -168,7 +169,7 @@ window.onload = function(){
         }
       }
 
-      // 60 sec ?
+      // 60 sec ごとに赤線と時間を描画
       if ((i % n60sec) === 0) {
         var sec  = i * period;  // index -> time
         var text = Math.floor(sec) + ' sec';
