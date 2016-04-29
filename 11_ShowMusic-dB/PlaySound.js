@@ -1,33 +1,16 @@
 window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var source;
-  var sourceBuffer;
   var audioContext;
   var oscillator = null;
   var fileReader   = new FileReader;
 
-  var isStop = null;
-
-  var startPoint;  // startが実行されたときのCurrentTime
-  var pasusePoint;  // 停止が実行されたときのCurrentTime
-  var playingTime;  // 再生中の曲の再生時間
-  var totalPauseTime = 0;  // 停止していた時間の合計
-  var playingDurationTime;  // 曲の全体の再生時間
-
   // HTML要素
   var audioFileButton = document.getElementById('audio-file-button');
-  var soundButton = document.getElementById('sound-button');
-  var rangeVolume = document.getElementById('range-volume');
-  var rangePlaybackRate = document.getElementById('range-playback-rate');
-  var checkboxLoop = document.getElementById('checkbox-loop');
   var visualizer = document.getElementById('visualizer');
-
-  var currentTime = document.getElementById('current-time');
-  var totalTime = document.getElementById('total-time');
 
   // 繰り返し処理
   var renewPlayingTimeInterval;
-
 
   // ファイルが選択されたとき
   audioFileButton.addEventListener('change', function(e){
@@ -46,24 +29,10 @@ window.onload = function(){
     if(source){
       source.stop();
       source = null;
-      sourceBuffer = null;
-      totalPauseTime = 0;
-      playingTime = 0;
     }
 
-    // 再生時間の情報の初期化
-    playingDurationTime = audioBuffer.duration;
-    var minute = Math.floor(audioBuffer.duration / 60);
-    var secound = Math.floor(audioBuffer.duration % 60);
-    if (minute < 10) { minute = "0" + minute; }
-    if (secound < 10) { secound = "0" + secound; }
-    totalTime.textContent = minute + ":" + secound;
-
     // オーディオの再生
-    startPoint = audioContext.currentTime;
     playAudio(audioBuffer);
-
-    renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
 
     // 波形データの記録
     var channelLs = new Float32Array(audioBuffer.length);
@@ -110,15 +79,8 @@ window.onload = function(){
     source.connect(gain);
     gain.connect(audioContext.destination);
 
-    // パラメータの設定
-    source.playbackRate.value = document.getElementById('range-playback-rate').valueAsNumber
-    source.loop = document.getElementById('checkbox-loop').checked;
-
     // Start audio
     source.start(0, playingTime);
-    isStop = false;
-    document.getElementById('sound-icon').classList.remove("icon-start");
-    document.getElementById('sound-icon').classList.add("icon-stop");
   };
 
   // キャンバスへ描画
@@ -203,64 +165,6 @@ window.onload = function(){
     canvasContext.fillText(' 0.00', 3, middle);
     canvasContext.fillText('-1.00', 3, innerBottom);
   };
-
-  // 現在の再生時間の更新
-  var renewPlayingTime = function() {
-    playingTime = audioContext.currentTime - (startPoint + totalPauseTime);
-    if(playingTime > playingDurationTime) {
-      clearInterval(renewPlayingTimeInterval);
-    } else {
-      var minute = Math.floor(playingTime / 60);
-      var secound = Math.floor(playingTime % 60);
-      if (minute < 10) { minute = "0" + minute; }
-      if (secound < 10) { secound = "0" + secound; }
-      currentTime.textContent = minute + ":" + secound;
-    }
-  }
-
-  // START / STOP ボタンが押されたとき
-  soundButton.addEventListener('click', function(){
-    if (isStop === null) { // ファイル選択前
-
-    } else if(isStop === true){ // 再開
-      totalPauseTime = totalPauseTime + (audioContext.currentTime  - pasusePoint);
-      playAudio(sourceBuffer);
-      renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
-    } else { // 停止
-      pasusePoint = audioContext.currentTime;
-      source.stop();
-      clearInterval(renewPlayingTimeInterval);
-      source = null;
-      isStop = true;
-      document.getElementById('sound-icon').classList.remove("icon-stop");
-      document.getElementById('sound-icon').classList.add("icon-start");
-    }
-  });
-
-  // Volumeバーが操作されたとき
-  rangeVolume.addEventListener('input', function() {
-    var min = gain.gain.minValue || 0;
-    var max = gain.gain.maxValue || 1;
-    if ((this.valueAsNumber >= min) && (this.valueAsNumber <= max)) {
-      gain.gain.value = this.valueAsNumber;
-      document.getElementById('output-volume').textContent = this.value;
-    }
-  });
-
-  // PlaybackRateバーが操作されたとき
-  rangePlaybackRate.addEventListener('input', function() {
-    if(source){
-      source.playbackRate.value = this.valueAsNumber;
-    }
-    document.getElementById('playback-rate').textContent = this.value;
-  });
-
-  // チェックボタンが操作されたとき
-  checkboxLoop.addEventListener('change', function() {
-    if(source){
-      source.loop = this.checked;
-    }
-  });
 
   // ビジュアライザーがクリックされたとき
   visualizer.addEventListener('click', function(e) {
