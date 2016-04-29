@@ -51,6 +51,9 @@ window.onload = function(){
 
     // キャンバスの描画
     drawAudio(visualizer, channelLs, audioContext.sampleRate);
+
+    // デシベルの表示
+
   };
 
   // ファイル読み込み失敗時のコールバック
@@ -64,12 +67,7 @@ window.onload = function(){
     source = audioContext.createBufferSource();
 
     // AudioBufferをセット
-    if (sourceBuffer) {
-      source.buffer = sourceBuffer;
-    } else {
-      source.buffer = audioBuffer;
-      sourceBuffer = audioBuffer;
-    }
+    source.buffer = audioBuffer;
 
     // ゲインノードの構築
     audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
@@ -80,7 +78,7 @@ window.onload = function(){
     gain.connect(audioContext.destination);
 
     // Start audio
-    source.start(0, playingTime);
+    source.start(0);
   };
 
   // キャンバスへ描画
