@@ -7,6 +7,8 @@ window.onload = function(){
 
   // HTML要素
   var audioFileButton = document.getElementById('audio-file-button');
+  var musicMaxdb = document.getElementById('music-max-db');
+  var musicMindb = document.getElementById('music-min-db');
   var visualizer = document.getElementById('visualizer');
 
   // 繰り返し処理
@@ -53,7 +55,7 @@ window.onload = function(){
     drawAudio(visualizer, channelLs, audioContext.sampleRate);
 
     // デシベルの表示
-
+    showMaxDB(channelLs);
   };
 
   // ファイル読み込み失敗時のコールバック
@@ -162,6 +164,23 @@ window.onload = function(){
     canvasContext.fillText(' 1.00', 3, paddingTop);
     canvasContext.fillText(' 0.00', 3, middle);
     canvasContext.fillText('-1.00', 3, innerBottom);
+  };
+
+  //　デシベルの最大値の表示
+  var showMaxDB = function(data) {
+    var max, min;
+
+    max = 0;
+    min = 0;
+
+    //console.log(data[10000]);
+
+    for (var i = 0, len = data.length; i < len; i++) {
+      if (data[i] > max) { max = data[i] };
+      if (data[i] < min) { min = data[i] };
+    }
+    musicMaxdb.textContent = max;
+    musicMindb.textContent = min;
   };
 
   // ビジュアライザーがクリックされたとき
