@@ -36,6 +36,11 @@ window.onload = function(){
 
   // ファイル読み込み完了時の処理
   fileReader.onload = function(){
+    // オーディオリソースを解放
+    if(audioContext) {
+      audioContext.close();
+    }
+    
     audioContext = new AudioContext;
     audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
   };
