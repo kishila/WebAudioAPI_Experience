@@ -31,7 +31,8 @@ window.onload = function(){
   video.addEventListener('loadedmetadata', function(event) {
     // Create the instance of MediaElementAudioSourceNode
     source = audioContext.createMediaElementSource(video);
-    //console.log(source.getChannelData);
+    // ソースの取得
+    console.log(video.currentSrc);
   });
 
   // ゲインノードの構築
