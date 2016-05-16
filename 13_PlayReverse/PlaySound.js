@@ -2,7 +2,6 @@ window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var originalSource, reverseSource;
   var audioContext = new AudioContext;
-  var oscillator = null;
   var fileReader   = new FileReader;
 
   audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
