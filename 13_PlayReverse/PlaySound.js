@@ -19,25 +19,21 @@ window.onload = function(){
       originalSource = audioContext.createBufferSource();
       reverseSource = audioContext.createBufferSource();
 
-      // AudioBufferをセット
+      // オリジナルのオーディオバッファデータをセット
       originalSource.buffer = audioBuffer;
 
-      // 反転
+      // 反転したオーディオバッファデータをセット
       if (audioBuffer.numberOfChannels > 1) {
         Array.prototype.reverse.call(audioBuffer.getChannelData(0));
         Array.prototype.reverse.call(audioBuffer.getChannelData(1));
-      } else if (buffer.numberOfChannels > 0) {
+      } else if (audioBuffer.numberOfChannels > 0) {
         Array.prototype.reverse.call(audioBuffer.getChannelData(0));
       }
-
       reverseSource.buffer = audioBuffer;
 
       // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
       originalSource.connect(audioContext.destination);
       reverseSource.connect(audioContext.destination);
-
-      // Start audio
-      //originalSource.start(0);
     });
   };
 
