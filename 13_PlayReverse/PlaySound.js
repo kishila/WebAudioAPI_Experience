@@ -1,6 +1,7 @@
 window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var originalSource, reverseSource;
+  var originalBuffer, reverseBuffer;
   var audioContext = new AudioContext;
   var fileReader   = new FileReader;
 
@@ -12,14 +13,12 @@ window.onload = function(){
       // 2回目以降のファイル選択
       if(originalSource){
         originalSource.stop();
+      } else if (reverseSource) {
+        reverseSource.stop();
       }
 
-      // AudioBufferSourceNodeのインスタンスの作成
-      originalSource = audioContext.createBufferSource();
-      reverseSource = audioContext.createBufferSource();
-
       // オリジナルのオーディオバッファデータをセット
-      originalSource.buffer = audioBuffer;
+      originalBuffer = audioBuffer;
 
       // 反転したオーディオバッファデータをセット
       if (audioBuffer.numberOfChannels > 1) {
@@ -28,11 +27,7 @@ window.onload = function(){
       } else if (audioBuffer.numberOfChannels > 0) {
         Array.prototype.reverse.call(audioBuffer.getChannelData(0));
       }
-      reverseSource.buffer = audioBuffer;
-
-      // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
-      originalSource.connect(audioContext.destination);
-      reverseSource.connect(audioContext.destination);
+      reverseBuffer = audioBuffer;
     });
   };
 
@@ -43,11 +38,24 @@ window.onload = function(){
 
   // 再生が押されたとき
   document.getElementById('play').addEventListener('click', function(){
+
+    // AudioBufferSourceNodeのインスタンスの作成
+    originalSource = audioContext.createBufferSource();
+    originalSource.buffer = originalBuffer;
+
+    // AudioBufferSourceNode (Input) -> AudioDestinationNode (Output)
+    originalSource.connect(audioContext.destination);
     originalSource.start(0);
   });
 
   // 逆再生が押されたとき
   document.getElementById('PlayReverse').addEventListener('click', function(){
+    // AudioBufferSourceNodeのインスタンスの作成
+    reverseSource = audioContext.createBufferSource();
+    reverseSource.buffer = reverseBuffer;
+
+    // AudioBufferSourceNode (Input) -> AudioDestinationNode (Output)
+    reverseSource.connect(audioContext.destination);
     reverseSource.start(0);
   });
 };
