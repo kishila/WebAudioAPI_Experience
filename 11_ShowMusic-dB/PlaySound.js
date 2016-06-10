@@ -11,9 +11,6 @@ window.onload = function(){
   var musicMindb = document.getElementById('music-min-db');
   var visualizer = document.getElementById('visualizer');
 
-  // 繰り返し処理
-  var renewPlayingTimeInterval;
-
   // ファイルが選択されたとき
   audioFileButton.addEventListener('change', function(e){
     fileReader.readAsArrayBuffer(e.target.files[0]);
@@ -25,7 +22,7 @@ window.onload = function(){
     if(audioContext) {
       audioContext.close();
     }
-    
+
     audioContext = new AudioContext;
     audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
   };
