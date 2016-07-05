@@ -2,13 +2,12 @@ window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var source;
   var audioContext;
-  var oscillator = null;
+  var analyser;
   var fileReader   = new FileReader;
 
   // HTML要素
   var audioFileButton = document.getElementById('audio-file-button');
-  var musicMaxdb = document.getElementById('music-max-db');
-  var musicMindb = document.getElementById('music-min-db');
+  var musicdb = document.getElementById('music-db');
   var visualizer = document.getElementById('visualizer');
 
   // ファイルが選択されたとき
@@ -56,8 +55,14 @@ window.onload = function(){
     // キャンバスの描画
     drawAudio(visualizer, channelLs, audioContext.sampleRate);
 
-    // デシベルの表示
-    showMaxDB(channelLs);
+    // デシベルの表示用の繰り返し処理
+    analyser.fftSize = 2048;  // The default value
+    var intervalid = window.setInterval(function() {
+      // Get data for drawing sound wave
+      var times = new Uint8Array(analyser.fftSize);
+      analyser.getByteTimeDomainData(times);
+      musicdb.textContent = times;
+    }, 500);
   };
 
   // ファイル読み込み失敗時のコールバック
@@ -73,13 +78,15 @@ window.onload = function(){
     // AudioBufferをセット
     source.buffer = audioBuffer;
 
-    // ゲインノードの構築
+    // オーディオコンテキスト作成
     audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
-    var gain = audioContext.createGain();
 
-    // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
-    source.connect(gain);
-    gain.connect(audioContext.destination);
+    // アナライザーノードの構築
+    analyser = audioContext.createAnalyser();
+
+    // AudioBufferSourceNode (Input) -> AnalyserNode (Visualization) -> AudioDestinationNode (Output)
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
 
     // Start audio
     source.start(0);
@@ -166,23 +173,6 @@ window.onload = function(){
     canvasContext.fillText(' 1.00', 3, paddingTop);
     canvasContext.fillText(' 0.00', 3, middle);
     canvasContext.fillText('-1.00', 3, innerBottom);
-  };
-
-  //　デシベルの最大値の表示
-  var showMaxDB = function(data) {
-    var max, min;
-
-    max = 0;
-    min = 0;
-
-    //console.log(data[10000]);
-
-    for (var i = 0, len = data.length; i < len; i++) {
-      if (data[i] > max) { max = data[i] };
-      if (data[i] < min) { min = data[i] };
-    }
-    musicMaxdb.textContent = max;
-    musicMindb.textContent = min;
   };
 
   // ビジュアライザーがクリックされたとき
