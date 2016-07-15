@@ -1,19 +1,29 @@
 window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
-  var audioContext = new AudioContext();
+  // Web Audio API関係
+  var audioContext = new AudioContext();    // オーディオコンテキスト
+  var analyser = audioContext.createAnalyser();  // アナライザーノード
+  analyser.fftSize = 2048;
+
   var fileReader   = new FileReader;
+  var audio = null;  // HTMLのaudioデータ
 
-  var audio = null;  // audioデータ
-
-  // HTML要素
+  // HTML要素 (左側)
   var audioFileButton = document.getElementById('audio-file-button');
   var soundButton = document.getElementById('sound-button');
+  var currentTime = document.getElementById('current-time');
+  var totalTime = document.getElementById('total-time');
   var rangeVolume = document.getElementById('range-volume');
   var rangePlaybackRate = document.getElementById('range-playback-rate');
   var checkboxLoop = document.getElementById('checkbox-loop');
   var checkboxAudio = document.getElementById('checkbox-audio');
-  var currentTime = document.getElementById('current-time');
-  var totalTime = document.getElementById('total-time');
+
+  // HTML要素 (左側)
+  var visualizer = document.getElementById('visualizer');
+  var canvasContext = visualizer.getContext('2d');
+
+  var renewPlayingTimeInterval;
+  var drawAudioInterval;
 
   // ファイルが選択されたとき
   audioFileButton.addEventListener('change', function(e){
@@ -26,7 +36,6 @@ window.onload = function(){
       window.alert('Please upload audio file.');
     } else {
       setupAudio(window.URL.createObjectURL(file));
-      //totalTime.textContent = audio.duration;
     }
   });
 
@@ -50,11 +59,12 @@ window.onload = function(){
     // Audioの読み込み開始時に発火
     audio.addEventListener('loadstart', function(event) {
 
-      // Create the instance of MediaElementAudioSourceNode
+      // Audioデータからソースノードの作成
       var source = audioContext.createMediaElementSource(audio);
 
       // MediaElementAudioSourceNode (Input) -> BiquadFilterNode (Filter) -> Delay (Delay) -> AudioDestinationNode (Output)
-      source.connect(audioContext.destination);
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
     }, false);
 
     // メタデータ読み込み完了時に発火
@@ -88,6 +98,84 @@ window.onload = function(){
       currentTime.textContent = minute + ":" + secound;
   }
 
+  // ビジュアライザーの描画
+  var drawAudio = function() {
+    var width  = visualizer.width;
+    var height = visualizer.height;
+
+    // 余白の設定
+    var paddingTop    = 20;
+    var paddingBottom = 20;
+    var paddingLeft   = 30;
+    var paddingRight  = 30;
+
+    // 波形の描画範囲
+    var innerWidth  = width  - paddingLeft - paddingRight;
+    var innerHeight = height - paddingTop  - paddingBottom;
+    var innerBottom = height - paddingBottom;
+    var middle = (innerHeight / 2) + paddingTop;
+
+    var frequencyDrawPoint = 200;
+
+    // キャンバス描画時にカットする配列の距離
+    var cutFrequencyLength = 4;
+
+    // 周波数スペクトルの取得 (最高を255、)
+    var spectrums = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(spectrums);
+
+    // キャンバスの初期化
+    canvasContext.clearRect(0, 0, width, height);　　// 描画データをリセット
+    canvasContext.beginPath();                     // 現在のパスをリセット
+
+    for (var i = 0, len = spectrums.length; i < len; i += cutFrequencyLength) {
+        var x = Math.floor((i / len) * innerWidth) + paddingLeft;
+        var y = Math.floor((1 - (spectrums[i] / 255)) * innerHeight) + paddingTop;
+
+        // スペクトルのパス作成
+        if (i === 0) {
+            canvasContext.moveTo(x, y);
+        } else {
+            canvasContext.lineTo(x, y);
+        }
+
+        // 200Hzごとに赤線と時間を描画
+        if(i % frequencyDrawPoint === 0) {
+          var text = i + ' Hz';
+
+          // 縦線の描画
+          canvasContext.fillStyle = 'rgba(255, 0, 0, 1.0)';
+          canvasContext.fillRect(x, paddingTop, 1, innerHeight);
+
+          // 200Hzごとの周波数の数値を描画
+          canvasContext.fillStyle = 'rgba(255, 255, 255, 1.0)';
+          canvasContext.font      = '16px "Times New Roman"';
+          canvasContext.fillText(text, (x - (canvasContext.measureText(text).width / 2)), (height - 3));
+        }
+    }
+
+    // スペクトルの描画
+    canvasContext.strokeStyle = 'rgba(0, 0, 255, 1.0)';
+    canvasContext.lineWidth   = 0.5;
+    canvasContext.lineCap     = 'round';
+    canvasContext.lineJoin    = 'miter';
+    canvasContext.stroke();
+
+    // 横線の描画
+    canvasContext.fillStyle = 'rgba(255, 0, 0, 1.0)';
+    canvasContext.fillRect(paddingLeft, middle,      innerWidth, 1);
+    canvasContext.fillRect(paddingLeft, paddingTop,  innerWidth, 1);
+    canvasContext.fillRect(paddingLeft, innerBottom, innerWidth, 1);
+
+    // 振幅の最高値と最低値の描画
+    canvasContext.fillStyle = 'rgba(255, 255, 255, 1.0)';
+    canvasContext.font      = '16px "Times New Roman"';
+    canvasContext.fillText('255', 3, paddingTop);
+    canvasContext.fillText('128', 3, middle);
+    canvasContext.fillText('  0', 3, innerBottom);
+
+  }
+
   ////////////////////////////////////////////////
   //                  UI関係                    //
   ///////////////////////////////////////////////
@@ -99,10 +187,12 @@ window.onload = function(){
             audio.playbackRate = rangePlaybackRate.valueAsNumber;
             audio.loop = checkboxLoop.checked ? true : false;
             audio.play();
-            var renewPlayingTimeInterval = setInterval(renewPlayingTime, 1000/60);
+            renewPlayingTimeInterval = setInterval(renewPlayingTime, 100);
+            rawAudioInterval = setInterval(drawAudio, 100);
         } else {
             audio.pause();
-            clearInterval(renewPlayingTimeInterval);
+            window.clearInterval(renewPlayingTimeInterval);
+            window.clearInterval(drawAudioInterval);
         }
     }
   });
