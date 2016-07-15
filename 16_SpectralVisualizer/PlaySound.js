@@ -115,20 +115,18 @@ window.onload = function(){
     var innerBottom = height - paddingBottom;
     var middle = (innerHeight / 2) + paddingTop;
 
-    var frequencyDrawPoint = 200;
-
-    // キャンバス描画時にカットする配列の距離
-    var cutFrequencyLength = 4;
-
-    // 周波数スペクトルの取得 (最高を255、)
+    // 周波数スペクトルの取得
     var spectrums = new Uint8Array(analyser.frequencyBinCount);
     analyser.getByteFrequencyData(spectrums);
+
+    maxFrequency = spectrums.length * audioContext.sampleRate / analyser.fftSize
+    n3kHz = Math.floor(3000 / (maxFrequency / spectrums.length));
 
     // キャンバスの初期化
     canvasContext.clearRect(0, 0, width, height);　　// 描画データをリセット
     canvasContext.beginPath();                     // 現在のパスをリセット
 
-    for (var i = 0, len = spectrums.length; i < len; i += cutFrequencyLength) {
+    for (var i = 0, len = spectrums.length; i < len; i++) {
         var x = Math.floor((i / len) * innerWidth) + paddingLeft;
         var y = Math.floor((1 - (spectrums[i] / 255)) * innerHeight) + paddingTop;
 
@@ -139,15 +137,15 @@ window.onload = function(){
             canvasContext.lineTo(x, y);
         }
 
-        // 200Hzごとに赤線と時間を描画
-        if(i % frequencyDrawPoint === 0) {
-          var text = i + ' Hz';
+        // 3kHzごとに赤線と時間を描画
+        if(i % n3kHz === 0) {
+          var text = Math.round(3 * i / n3kHz) + ' kHz';
 
           // 縦線の描画
           canvasContext.fillStyle = 'rgba(255, 0, 0, 1.0)';
           canvasContext.fillRect(x, paddingTop, 1, innerHeight);
 
-          // 200Hzごとの周波数の数値を描画
+          // 1000Hzごとの周波数の数値を描画
           canvasContext.fillStyle = 'rgba(255, 255, 255, 1.0)';
           canvasContext.font      = '16px "Times New Roman"';
           canvasContext.fillText(text, (x - (canvasContext.measureText(text).width / 2)), (height - 3));
