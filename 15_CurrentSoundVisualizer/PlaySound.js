@@ -1,14 +1,12 @@
 window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
   var source;
-  var audioContext;
+  var audioContext = audioContext.createBufferSource();
   var oscillator = null;
   var fileReader   = new FileReader;
 
   // HTML要素
   var audioFileButton = document.getElementById('audio-file-button');
-  var musicMaxdb = document.getElementById('music-max-db');
-  var musicMindb = document.getElementById('music-min-db');
   var visualizer = document.getElementById('visualizer');
 
   // ファイルが選択されたとき
@@ -67,8 +65,6 @@ window.onload = function(){
 
   // オーディオの再生
   var playAudio = function(audioBuffer) {
-    // AudioBufferSourceNodeのインスタンスの作成
-    source = audioContext.createBufferSource();
 
     // AudioBufferをセット
     source.buffer = audioBuffer;
