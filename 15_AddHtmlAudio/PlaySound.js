@@ -53,7 +53,7 @@ window.onload = function(){
       // Create the instance of MediaElementAudioSourceNode
       var source = audioContext.createMediaElementSource(audio);
 
-      // MediaElementAudioSourceNode (Input) -> BiquadFilterNode (Filter) -> Delay (Delay) -> GainNode (Master Volume) -> AudioDestinationNode (Output)
+      // MediaElementAudioSourceNode (Input) -> BiquadFilterNode (Filter) -> Delay (Delay) -> AudioDestinationNode (Output)
       source.connect(audioContext.destination);
     }, false);
 
