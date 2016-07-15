@@ -26,7 +26,6 @@ window.onload = function(){
       window.alert('Please upload audio file.');
     } else {
       setupAudio(window.URL.createObjectURL(file));
-      //totalTime.textContent = audio.duration;
     }
   });
 
