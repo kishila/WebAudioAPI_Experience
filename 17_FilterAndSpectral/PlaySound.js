@@ -4,6 +4,8 @@ window.onload = function(){
   var audioContext = new AudioContext();    // オーディオコンテキスト
   var analyser = audioContext.createAnalyser();  // アナライザーノード
   analyser.fftSize = 2048;
+  var filter = audioContext.createBiquadFilter();     // フィルターノード
+  filter.frequency.value = 22050;
 
   var fileReader   = new FileReader;
   var audio = null;  // HTMLのaudioデータ
@@ -21,7 +23,12 @@ window.onload = function(){
   // HTML要素 (左側)
   var visualizer = document.getElementById('visualizer');
   var canvasContext = visualizer.getContext('2d');
+  var selectFilter = document.getElementById('select-filter');
+  var filterType = document.getElementById('filter-type')
+  var filterFrequency = document.getElementById('filter-frequency')
+  var rangeFrequency = document.getElementById('range-frequency');
 
+  // 繰り返し処理
   var renewPlayingTimeInterval;
   var drawAudioInterval;
 
@@ -63,8 +70,10 @@ window.onload = function(){
       var source = audioContext.createMediaElementSource(audio);
 
       // MediaElementAudioSourceNode (Input) -> BiquadFilterNode (Filter) -> Delay (Delay) -> AudioDestinationNode (Output)
-      source.connect(analyser);
+      source.connect(filter);
+      filter.connect(analyser);
       analyser.connect(audioContext.destination);
+
     }, false);
 
     // メタデータ読み込み完了時に発火
@@ -221,6 +230,22 @@ window.onload = function(){
   checkboxAudio.addEventListener('change', function() {
     if (audio instanceof HTMLAudioElement) {
       audio.style.display = this.checked ? 'block' : 'none';
+    }
+  });
+
+  // フィルタータイプが選択されたとき
+  selectFilter.addEventListener('change', function() {
+    filter.type = this.value;
+    filterType.textContent = this.value.toUpperCase();;
+  });
+
+  // frequencyバーが操作されたとき
+  rangeFrequency.addEventListener('input', function() {
+    var min = filter.frequency.minValue || 10;
+    var max = filter.frequency.maxValue || (audioContext.sampleRate / 2);
+    if ((this.valueAsNumber >= min) && (this.valueAsNumber <= max)) {
+        filter.frequency.value = this.valueAsNumber;
+        filterFrequency.textContent = this.value;
     }
   });
 }
