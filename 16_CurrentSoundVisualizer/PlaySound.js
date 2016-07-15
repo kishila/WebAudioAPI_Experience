@@ -1,202 +1,138 @@
 window.onload = function(){
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
-  var source;
-  var audioContext = audioContext.createBufferSource();
-  var oscillator = null;
+  var audioContext = new AudioContext();
   var fileReader   = new FileReader;
+
+  var audio = null;  // audioデータ
 
   // HTML要素
   var audioFileButton = document.getElementById('audio-file-button');
-  var visualizer = document.getElementById('visualizer');
+  var soundButton = document.getElementById('sound-button');
+  var rangeVolume = document.getElementById('range-volume');
+  var rangePlaybackRate = document.getElementById('range-playback-rate');
+  var checkboxLoop = document.getElementById('checkbox-loop');
+  var checkboxAudio = document.getElementById('checkbox-audio');
+  var currentTime = document.getElementById('current-time');
+  var totalTime = document.getElementById('total-time');
 
   // ファイルが選択されたとき
   audioFileButton.addEventListener('change', function(e){
-    fileReader.readAsArrayBuffer(e.target.files[0]);
+    var file = e.target.files[0];
+
+    // オーディオファイルならセットアップ
+    if (!(file instanceof File)) {
+      window.alert('Please upload file.');
+    } else if (file.type.indexOf('audio') === -1) {
+      window.alert('Please upload audio file.');
+    } else {
+      setupAudio(window.URL.createObjectURL(file));
+      //totalTime.textContent = audio.duration;
+    }
   });
 
-  // ファイル読み込み完了時の処理
-  fileReader.onload = function(){
-    // オーディオリソースを解放
-    if(audioContext) {
-      audioContext.close();
+  // オーディオファイル再生の準備
+  var setupAudio = function(src) {
+    // audioタグ関連の初期化
+    if (audio instanceof HTMLAudioElement) {
+      audio.pause();
+      audio = null;
+      document.getElementById('audio-tag').removeChild(document.getElementById('audio-tag').firstChild);
+      document.getElementById('sound-icon').classList.remove("icon-stop");
+      document.getElementById('sound-icon').classList.add("icon-start");
     }
 
-    audioContext = new AudioContext;
-    audioContext.decodeAudioData(fileReader.result, successCallback, errorCallback);
+    // Audioタグのsrcのセット
+    audio = new Audio(src);
+    audio.setAttribute('controls', true);
+    document.getElementById('audio-tag').appendChild(audio);
+    audio.style.display = 'none';
+
+    // Audioの読み込み開始時に発火
+    audio.addEventListener('loadstart', function(event) {
+
+      // Create the instance of MediaElementAudioSourceNode
+      var source = audioContext.createMediaElementSource(audio);
+
+      // MediaElementAudioSourceNode (Input) -> BiquadFilterNode (Filter) -> Delay (Delay) -> AudioDestinationNode (Output)
+      source.connect(audioContext.destination);
+    }, false);
+
+    // メタデータ読み込み完了時に発火
+    audio.addEventListener("loadedmetadata",function (e){
+
+      // 再生時間の表示
+      var minute = Math.floor(audio.duration / 60);
+      var secound = Math.floor(audio.duration % 60);
+      if (minute < 10) { minute = "0" + minute; }
+      if (secound < 10) { secound = "0" + secound; }
+      totalTime.textContent = minute + ":" + secound;
+    });
+
+    // オーディオ再生時のイベント
+    audio.addEventListener('play', function() {
+      soundButton.innerHTML = '<span id="sound-icon" class="icon icon-stop"></span>';
+    }, false);
+
+    // オーディオ停止時のイベント
+    audio.addEventListener('pause', function() {
+      soundButton.innerHTML = '<span id="sound-icon" class="icon icon-start"></span>';
+    }, false);
   };
 
-  // ファイル読み込み成功時のコールバック
-  var successCallback = function(audioBuffer) {
-    // 2回目以降のファイル選択
-    if(source){
-      source.stop();
-      source = null;
-    }
-
-    // オーディオの再生
-    playAudio(audioBuffer);
-
-    // 波形データの記録
-    var channelLs = new Float32Array(audioBuffer.length);
-    var channelRs = new Float32Array(audioBuffer.length);
-
-    // ステレオかモノラルかをチャンネル数で判別
-    if (audioBuffer.numberOfChannels > 1) {
-      channelLs.set(audioBuffer.getChannelData(0));
-      channelRs.set(audioBuffer.getChannelData(1));
-    } else if (audioBuffer.numberOfChannels > 0) {
-      channelLs.set(audioBuffer.getChannelData(0));
-    } else {
-      window.alert('The number of channels is invalid.');
-      return;
-    }
-
-    // キャンバスの描画
-    drawAudio(visualizer, channelLs, audioContext.sampleRate);
-
-    // デシベルの表示
-    showMaxDB(channelLs);
-  };
-
-  // ファイル読み込み失敗時のコールバック
-  var errorCallback = function(error) {
-    alert("file loading faild")
+  // 現在の再生時間の更新
+  var renewPlayingTime = function() {
+      var minute = Math.floor(audio.currentTime / 60);
+      var secound = Math.floor(audio.currentTime % 60);
+      if (minute < 10) { minute = "0" + minute; }
+      if (secound < 10) { secound = "0" + secound; }
+      currentTime.textContent = minute + ":" + secound;
   }
 
-  // オーディオの再生
-  var playAudio = function(audioBuffer) {
+  ////////////////////////////////////////////////
+  //                  UI関係                    //
+  ///////////////////////////////////////////////
 
-    // AudioBufferをセット
-    source.buffer = audioBuffer;
-
-    // ゲインノードの構築
-    audioContext.createGain = audioContext.createGain || audioContext.createGainNode;
-    var gain = audioContext.createGain();
-
-    // AudioBufferSourceNode (Input) -> GainNode (Volume) -> AudioDestinationNode (Output)
-    source.connect(gain);
-    gain.connect(audioContext.destination);
-
-    // Start audio
-    source.start(0);
-  };
-
-  // キャンバスへ描画
-  var drawAudio = function(canvas, data, sampleRate) {
-    var canvasContext = canvas.getContext('2d');
-    var width  = canvas.width;
-    var height = canvas.height;
-
-    // 余白の設定
-    var paddingTop    = 20;
-    var paddingBottom = 20;
-    var paddingLeft   = 30;
-    var paddingRight  = 30;
-
-    // 波形の描画範囲
-    var innerWidth  = width  - paddingLeft - paddingRight;
-    var innerHeight = height - paddingTop  - paddingBottom;
-    var innerBottom = height - paddingBottom;
-    var middle = (innerHeight / 2) + paddingTop;
-
-    // Sampling period
-    var period = 1 / sampleRate;
-
-    // 50 msec あたりのサンプリング周波数
-    var n50msec = Math.floor(50 * Math.pow(10, -3) * sampleRate);
-
-    // 60 sec あたりのサンプリング周波数
-    var n60sec = Math.floor(60 * sampleRate);
-
-    // Clear previous data
-    canvasContext.clearRect(0, 0, width, height);
-
-    // Draw audio wave
-    canvasContext.beginPath();
-
-    // 波形と60秒単位の枠線の描画
-    for (var i = 0, len = data.length; i < len; i++) {
-      // 50 msec ?
-      if ((i % n50msec) === 0) {
-        var x = Math.floor((i / len) * innerWidth) + paddingLeft;
-        var y = Math.floor(((1 - data[i]) / 2) * innerHeight) + paddingTop;
-
-        if (i === 0) {
-            canvasContext.moveTo(x, y);
+  // START / STOP ボタンが押されたとき
+  soundButton.addEventListener('click', function(){
+    if (audio instanceof HTMLAudioElement) {
+        if (audio.paused) {
+            audio.playbackRate = rangePlaybackRate.valueAsNumber;
+            audio.loop = checkboxLoop.checked ? true : false;
+            audio.play();
+            var renewPlayingTimeInterval = setInterval(renewPlayingTime, 1000/60);
         } else {
-            canvasContext.lineTo(x, y);
+            audio.pause();
+            clearInterval(renewPlayingTimeInterval);
         }
-      }
-
-      // 60 sec ?
-      if ((i % n60sec) === 0) {
-        var sec  = i * period;  // index -> time
-        var text = Math.floor(sec) + ' sec';
-
-        // Draw grid (X)
-        canvasContext.fillStyle = 'rgba(255, 0, 0, 1.0)';
-        canvasContext.fillRect(x, paddingTop, 1, innerHeight);
-
-        // Draw text (X)
-        canvasContext.fillStyle = 'rgba(255, 255, 255, 1.0)';
-        canvasContext.font      = '16px "Times New Roman"';
-        canvasContext.fillText(text, (x - (canvasContext.measureText(text).width / 2)), (height - 3));
-      }
     }
+  });
 
-    canvasContext.strokeStyle = 'rgba(0, 0, 255, 1.0)';
-    canvasContext.lineWidth   = 0.5;
-    canvasContext.lineCap     = 'round';
-    canvasContext.lineJoin    = 'miter';
-    canvasContext.stroke();
-
-    // Draw grid (Y)
-    canvasContext.fillStyle = 'rgba(255, 0, 0, 1.0)';
-    canvasContext.fillRect(paddingLeft, middle,      innerWidth, 1);
-    canvasContext.fillRect(paddingLeft, paddingTop,  innerWidth, 1);
-    canvasContext.fillRect(paddingLeft, innerBottom, innerWidth, 1);
-
-    // Draw text (Y)
-    canvasContext.fillStyle = 'rgba(255, 255, 255, 1.0)';
-    canvasContext.font      = '16px "Times New Roman"';
-    canvasContext.fillText(' 1.00', 3, paddingTop);
-    canvasContext.fillText(' 0.00', 3, middle);
-    canvasContext.fillText('-1.00', 3, innerBottom);
-  };
-
-  //　デシベルの最大値の表示
-  var showMaxDB = function(data) {
-    var max, min;
-
-    max = 0;
-    min = 0;
-
-    //console.log(data[10000]);
-
-    for (var i = 0, len = data.length; i < len; i++) {
-      if (data[i] > max) { max = data[i] };
-      if (data[i] < min) { min = data[i] };
+  // Volumeバーが操作されたとき
+  rangeVolume.addEventListener('input', function() {
+    if (audio instanceof HTMLAudioElement) {
+      audio.volume = this.valueAsNumber;
     }
-    musicMaxdb.textContent = max;
-    musicMindb.textContent = min;
-  };
-
-  // ビジュアライザーがクリックされたとき
-  visualizer.addEventListener('click', function(e) {
-    var rect = e.target.getBoundingClientRect();
-    var canvasX = e.clientX - Math.floor(rect.left);
-    var canvasY = e.clientY - Math.floor(rect.top);
-    //console.log("canvasX: " + canvasX);
-    //console.log("canvasY: " + canvasY);
+    document.getElementById('output-volume').textContent = this.value;
   });
 
-  // ビジュアライザー内にマウスが入ったとき
-  visualizer.addEventListener('mouseover', function(e) {
-
+  // PlaybackRateバーが操作されたとき
+  rangePlaybackRate.addEventListener('input', function() {
+    if (audio instanceof HTMLAudioElement) {
+      //audio.playbackRate.value = this.valueAsNumber;
+      audio.playbackRate = this.valueAsNumber;
+    }
+    document.getElementById('playback-rate').textContent = this.value;
   });
 
-  // ビジュアライザー外にマウスが出たとき
-  visualizer.addEventListener('mouseout', function(e) {
-
+  // ループのチェックボタンが操作されたとき
+  checkboxLoop.addEventListener('change', function() {
+    audio.loop = this.checked ? true : false;
   });
-};
+
+  // audioのチェックボタンが操作されたとき
+  checkboxAudio.addEventListener('change', function() {
+    if (audio instanceof HTMLAudioElement) {
+      audio.style.display = this.checked ? 'block' : 'none';
+    }
+  });
+}
