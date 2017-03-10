@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AddHtmlAudio</title>
+    <script type="text/javascript" src="PlaySound.js"></script>
+    <link rel="stylesheet" type="text/css" href="./css/icon.css">
+    <link rel="stylesheet" type="text/css" href="./css/title.css">
+  </head>
+  <body>
+    <dl>
+      <dt>
+        <label>
+          31.25 Hz :
+          <span id="db1">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range1" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          62.5 Hz :
+          <span id="db2">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range2" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          125 Hz :
+          <span id="db3">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range3" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          250 Hz :
+          <span id="db4">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range4" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          500 Hz :
+          <span id="db5">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range5" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          1 kHz :
+          <span id="db6">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range6" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          2 kHz :
+          <span id="db7">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range7" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          4 kHz :
+          <span id="db8">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range8" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          8 kHz :
+          <span id="db9">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range9" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          16 kHz :
+          <span id="db10">0</span>dB
+        </label>
+      </dt>
+      <dd>
+        <input type="range" id="range10" value="0" min="-40" max="40" step="1">
+      </dd>
+      <br>
+      <dt>
+        <label>
+          : audioタグ
+        </label>
+      </dt>
+        <audio id="audio" src="mp3/sample.mp3" controls></audio>
+      </dd>
+      <br>
+    </dl>
+  </body>
+</html>
